@@ -1,7 +1,13 @@
 #
 #
 
-add_executable(ddaemon main_daemon.cpp)
+add_executable(ddaemon
+        main_daemon.cpp
+        DaemonGuard.cpp
+        DaemonGuard.h
+        DaemonHandler.cpp
+        DaemonHandler.h
+)
 
 # подключаем общую часть
 target_link_libraries(ddaemon PRIVATE dcommon)
