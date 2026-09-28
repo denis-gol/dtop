@@ -20,6 +20,52 @@ volatile sig_atomic_t g_running = 1;
 #include <poll.h>
 #include <cstring>
 
+// Структура для хранения сырых тиков CPU из /proc/stat
+struct CpuTicks {
+  uint64_t user, nice, system, idle, iowait, irq, softirq, steal;
+
+  uint64_t get_idle() const { return idle + iowait; }
+  uint64_t get_active() const { return user + nice + system + irq + softirq + steal; }
+  uint64_t get_total() const { return get_idle() + get_active(); }
+};
+
+// Функция чтения сырых тиков процессора
+CpuTicks read_cpu_ticks() {
+    CpuTicks ticks{};
+    std::ifstream file("/proc/stat");
+    std::string cpu_label;
+    // @todo - так плохо читать, нужно брать строку целиком и резать по пробелам
+    if (file >> cpu_label >> ticks.user >> ticks.nice >> ticks.system
+             >> ticks.idle >> ticks.iowait >> ticks.irq >> ticks.softirq >> ticks.steal) {
+        return ticks;
+    }
+    return {};
+}
+
+// Функция расчета реальной загрузки RAM в процентах
+uint8_t get_ram_usage_percentage() {
+    std::ifstream file("/proc/meminfo");
+    std::string label;
+    uint64_t value = 0;
+    uint64_t total = 0;
+    uint64_t available = 0;
+
+    while (file >> label >> value) {
+        if (label == "MemTotal:") total = value;
+        else if (label == "MemAvailable:") available = value;
+
+        // Переходим к следующей строке (пропускаем "kB")
+        std::string dummy;
+        file >> dummy;
+
+        if (total && available) break;
+    }
+
+    if (total == 0) return 0;
+
+    return static_cast<uint8_t>(100 * (total - available) / total);
+}
+
 int main() {
 
     daemonize();
@@ -40,11 +86,14 @@ int main() {
 
     uint32_t iter = 0;
     bool is_paused = false;
-    bool running = true;
+
+    // Делаем замер CPU перед стартом цикла для расчета дельты времени
+    CpuTicks prev_cpu = read_cpu_ticks();
 
     while (g_running) {
         // Проверяем, прислал ли UI какую-то команду (таймаут 0 — проверяем мгновенно)
-        int ret = poll(fds, 1, 0);
+        int ret = poll(fds, 1, 200);
+
         if (ret>0 && (fds[0].revents & POLLIN)) {
             ControlPacket cpack{};
             ssize_t bytes = recv(client_fd, &cpack, sizeof(cpack), 0);
@@ -54,7 +103,6 @@ int main() {
                 break;
             }
 
-
             logger.log_message("Получена команда ID: " + std::to_string((int) cpack.command_id));
             if (cpack.command_id==1) {
                 is_paused = true;
@@ -63,23 +111,36 @@ int main() {
                 is_paused = false;
             }
             else if (cpack.command_id==3) {
-                running = false;
                 break;
             }
+        } else if (ret < 0) {
+            if (errno == EINTR) continue;
+            logger.log_message("Ошибка системного вызова poll()");
+            break;
         }
 
         // Если мы не на паузе, генерируем метрики
         MetricsPacket metrics{};
 
-
-        // @frag - тут обрабатываем реальные метрики (сейчас - фейковые).
         if (!is_paused) {
             iter++;
         }
         metrics.iteration = iter;
-        // Генерируем фейковую пилообразную загрузку для теста баров
-        metrics.cpu_usage = (iter*7)%101;
-        metrics.ram_usage = (40+(iter%30));
+
+        // собираем метрики процессоруа
+        CpuTicks current_cpu = read_cpu_ticks();
+        uint64_t total_delta = current_cpu.get_total() - prev_cpu.get_total();
+        uint64_t active_delta = current_cpu.get_active() - prev_cpu.get_active();
+
+        if (total_delta > 0) {
+            metrics.cpu_usage = static_cast<uint8_t>((100 * active_delta) / total_delta);
+        } else {
+            metrics.cpu_usage = 0;
+        }
+        prev_cpu = current_cpu;
+
+        // собираем метрики памяти
+        metrics.ram_usage = get_ram_usage_percentage();
 
         if (is_paused) {
             std::strncpy(metrics.status_text, "PAUSED", sizeof(metrics.status_text));
@@ -91,9 +152,6 @@ int main() {
         // Отправляем пакет с метриками UI-клиенту
         ::send(client_fd, &metrics, sizeof(metrics), 0);
 
-        // Имитируем шаг измерения в 200 миллисекунд
-        // @frag - а как сделать без имитации, чтобы не загрузить проц???
-        usleep(2e5);
     }
 
     close(client_fd);
