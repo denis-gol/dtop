@@ -4,7 +4,7 @@
 add_executable(dclient
         main_client.cpp
         ClientHandler.cpp
-        ../dcommon/Connect.cpp
+        ../dcommon/Connect.h
         ../dcommon/Logger.h
 )
 
