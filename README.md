@@ -12,4 +12,8 @@
    - Daemonization: fork, dup2, umask, chdir, stdio>>/dev/null
    - Управление loop: volatile, sig_atomic_t
 
-1) 
+2) Визуализация в консоли (библиотека ncurses)
+
+3) Добавил взаимодействие демона и клиента через unix-сокет (AF_UNIX)
+
+4) 

@@ -20,7 +20,7 @@
 const char* FILEPATH = "ui.log";
 
 // @todo - переписать на templates
-
+// @todo - ИЛИ переписать на чистом Си
 class Logger {
 private:
     std::string filepath = FILEPATH;

@@ -10,7 +10,13 @@
 #include <unistd.h> // close
 #include <cerrno>
 
-
+/**
+ * Создает 2 файла:
+ * ("/tmp/" + app_name + ".lock") - advisory-блокировка (через ядро)
+ * ("/tmp/" + app_name + ".pic") - хранит PID демона (админ сможет найти процесс если надо)
+ *
+ * @param app_name
+ */
 DaemonGuard::DaemonGuard(const std::string& app_name)
     : lock_path("/tmp/" + app_name + ".lock")
     , pid_path("/tmp/" + app_name + ".pic")
@@ -43,9 +49,11 @@ DaemonGuard::DaemonGuard(const std::string& app_name)
 
 DaemonGuard::~DaemonGuard() {
     if (lock_fd != -1) {
+        // PID-файл удаляем, он больше не нужен
         unlink(pid_path.c_str());
-        // просто закрываем дескриптор. Ядро само снимет блокировку,
-        // а файл пусть остается - его удаление может привести к гонке.
+
+        // LOCK-файл не нужен, но его удаление может привести к гонке.
+        // Просто закрываем дескриптор. Ядро само снимет блокировку.
         close(lock_fd);
     }
 }
