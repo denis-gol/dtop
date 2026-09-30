@@ -18,8 +18,10 @@ private:
       uint64_t get_total() const { return get_idle()+get_active(); }
     };
 
+    // предыдущее состояние тиков
     CpuTicks m_prev_cpu;
-    CpuTicks read_cpu_ticks();
+
+    static CpuTicks read_cpu_ticks();
 
 public:
     MetricsCollector();
