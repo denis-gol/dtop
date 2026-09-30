@@ -54,8 +54,11 @@ MetricsCollector::CpuTicks MetricsCollector::read_cpu_ticks(){
     return {};
 }
 
+// На несколько % будет отличаться от показателя в htop, т.к. та считает немного по-другому
+// @todo - сделать как в htop (необязательно)
 uint8_t MetricsCollector::get_ram_usage_percentage() {
     std::ifstream file("/proc/meminfo");
+    if (!file.is_open()) return {};
     std::string line;
 
     std::string label;
