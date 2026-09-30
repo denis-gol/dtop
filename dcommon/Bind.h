@@ -1,5 +1,5 @@
 //
-// Created by admin on 25.09.2026.
+// Created by denisg on 25.09.2026.
 //
 
 #ifndef DTOP_BIND_H

@@ -1,5 +1,5 @@
 //
-// Created by admin on 30.09.2026.
+// Created by denisg on 30.09.2026.
 //
 
 #ifndef DTOP_METRICSHANDLER_H

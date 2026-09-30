@@ -1,5 +1,5 @@
 //
-// Created by admin on 15.09.2026.
+// Created by denisg on 15.09.2026.
 //
 #include <csignal> // setsid, sig_atomic_t, SIGTERM etc
 #include <unistd.h> // chdir, fork, dup2

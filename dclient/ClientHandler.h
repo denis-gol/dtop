@@ -1,5 +1,5 @@
 //
-// Created by admin on 18.09.2026.
+// Created by denisg on 18.09.2026.
 //
 
 #ifndef DTOP_HANDLER_H

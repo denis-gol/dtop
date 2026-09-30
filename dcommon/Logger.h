@@ -1,5 +1,5 @@
 //
-// Created by admin on 25.09.2026.
+// Created by denisg on 25.09.2026.
 //
 
 #ifndef DTOP_LOGGER_H
@@ -19,8 +19,7 @@
 
 const char* FILEPATH = "ui.log";
 
-// @todo - переписать на templates
-// @todo - ИЛИ переписать на чистом Си
+// @todo - переписать на templates ИЛИ переписать на чистом Си
 class Logger {
 private:
     std::string filepath = FILEPATH;
