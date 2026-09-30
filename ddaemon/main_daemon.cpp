@@ -24,6 +24,7 @@ volatile sig_atomic_t g_running = 1;
 
 int main() {
 
+    // @todo - сделать, чтобы по флагу -f (foreground) процесс не демонизировался.
     daemonize();
     DaemonGuard guard("dtop");
 
