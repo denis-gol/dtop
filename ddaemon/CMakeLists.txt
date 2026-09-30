@@ -1,17 +1,24 @@
 #
 #
 
-add_executable(ddaemon
+set(DAEMON_SOURCES
         main_daemon.cpp
         DaemonGuard.cpp
-        DaemonGuard.h
         DaemonHandler.cpp
-        DaemonHandler.h
-        ../dcommon/Logger.h
+        MetricsCollector.cpp
 )
 
+set(DAEMON_HEADERS
+        DaemonGuard.h
+        DaemonHandler.h
+        MetricsCollector.h
+)
+
+add_executable(ddaemon ${DAEMON_SOURCES} ${DAEMON_HEADERS})
+
 # подключаем общую часть
-target_link_libraries(ddaemon PRIVATE dcommon)
+target_include_directories(ddaemon PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../dcommon)
+
 
 # если вдруг использовать потоки (пока не планировал)
 #find_package(Threads REQUIRED)
